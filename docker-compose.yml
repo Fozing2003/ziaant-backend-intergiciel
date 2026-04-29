@@ -1,0 +1,67 @@
+services:
+
+  postgresql:
+    image: postgres:15
+    container_name: ziaant-postgresql
+    environment:
+      POSTGRES_USER: ziaant
+      POSTGRES_PASSWORD: ziaant123
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ziaant-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: ziaant-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ziaant
+      RABBITMQ_DEFAULT_PASS: ziaant123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - ziaant-network
+
+  eureka-server:
+    build: ./eureka-server
+    container_name: ziaant-eureka
+    ports:
+      - "8761:8761"
+    networks:
+      - ziaant-network
+
+  config-server:
+    build: ./config-server
+    container_name: ziaant-config
+    ports:
+      - "8888:8888"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+    networks:
+      - ziaant-network
+
+  gateway-service:
+    build: ./gateway-service
+    container_name: ziaant-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+      - config-server
+    networks:
+      - ziaant-network
+
+volumes:
+  postgres_data:
+
+networks:
+  ziaant-network:
+    driver: bridge

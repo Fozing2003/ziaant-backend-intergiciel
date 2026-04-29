@@ -1,0 +1,34 @@
+# Compiled
+*.class
+*.jar
+*.war
+target/
+build/
+
+# IDE
+.idea/
+*.iml
+.settings/
+.project
+.classpath
+.vscode/
+.mvn/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+application-local.properties
+application-local.yml
+
+# Docker
+docker-compose.override.yml
+
+# Node
+node_modules/
