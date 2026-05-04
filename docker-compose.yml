@@ -7,9 +7,8 @@ services:
       POSTGRES_USER: ziaant
       POSTGRES_PASSWORD: ziaant123
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres_data:/var/lib/postgresql/data
     networks:
       - ziaant-network
@@ -56,6 +55,23 @@ services:
     depends_on:
       - eureka-server
       - config-server
+    networks:
+      - ziaant-network
+
+  auth-service:
+    build: ./services/auth-service
+    container_name: ziaant-auth
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: ziaant
+      SPRING_DATASOURCE_PASSWORD: ziaant123
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: ZiaantReserveTableCMSuperSecretKeyForJWT2025MustBe256BitsLong!
+    depends_on:
+      - postgresql
+      - eureka-server
     networks:
       - ziaant-network
 
