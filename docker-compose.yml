@@ -10,6 +10,11 @@ services:
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ziaant"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - ziaant-network
 
@@ -30,11 +35,7 @@ services:
     container_name: ziaant-eureka
     ports:
       - "8761:8761"
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # healthcheck supprimé temporairement pour éviter le blocage
     networks:
       - ziaant-network
 
@@ -47,7 +48,7 @@ services:
       EUREKA_URI: http://eureka-server:8761/eureka/
     depends_on:
       eureka-server:
-        condition: service_healthy
+        condition: service_started
     networks:
       - ziaant-network
 
@@ -60,7 +61,7 @@ services:
       EUREKA_URI: http://eureka-server:8761/eureka/
     depends_on:
       eureka-server:
-        condition: service_healthy
+        condition: service_started
       config-server:
         condition: service_started
     networks:
@@ -83,13 +84,31 @@ services:
     environment:
       EUREKA_URI: http://eureka-server:8761/eureka/
       SPRING_RABBITMQ_HOST: rabbitmq
-      GMAIL_APP_PASSWORD: "urthijivxdudkbtk" 
+      GMAIL_APP_PASSWORD: "urthijivxdudkbtk"
     depends_on:
       rabbitmq:
         condition: service_started
       eureka-server:
-        condition: service_healthy
+        condition: service_started
       mailhog:
+        condition: service_started
+    networks:
+      - ziaant-network
+
+  restaurant-service:
+    build: ./services/restaurant-service
+    container_name: ziaant-restaurant
+    ports:
+    - "8084:8084"
+    environment:
+      EUREKA_URI: http://eureka-server:8761/eureka/
+      DB_HOST: postgresql          # ← MANQUAIT
+      DB_USERNAME: ziaant          # ← MANQUAIT
+      DB_PASSWORD: ziaant123       # ← MANQUAIT
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      eureka-server:
         condition: service_started
     networks:
       - ziaant-network
