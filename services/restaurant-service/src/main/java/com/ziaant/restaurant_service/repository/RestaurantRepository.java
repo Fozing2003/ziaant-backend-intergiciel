@@ -1,6 +1,7 @@
 package com.ziaant.restaurant_service.repository;
 
 import com.ziaant.restaurant_service.entity.Restaurant;
+
 import com.ziaant.restaurant_service.entity.StatutRestaurant;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -37,3 +38,4 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                             @Param("cuisine") String cuisine,
                             @Param("search") String search);
 }
+

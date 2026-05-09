@@ -1,12 +1,11 @@
-package com.ziaant.restaurant_service.dto;
-
+package com.ziaant.notification_service.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class MessageResponse {
+public class NotificationResponse {
+    private String status;
     private String message;
 }
-

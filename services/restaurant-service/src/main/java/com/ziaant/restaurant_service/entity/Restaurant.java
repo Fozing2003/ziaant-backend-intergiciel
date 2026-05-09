@@ -1,5 +1,6 @@
 package com.ziaant.restaurant_service.entity;
 
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -69,3 +70,4 @@ public class Restaurant {
         this.updatedAt = LocalDateTime.now();
     }
 }
+

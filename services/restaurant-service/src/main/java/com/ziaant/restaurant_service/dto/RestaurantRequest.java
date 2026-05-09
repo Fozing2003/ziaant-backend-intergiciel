@@ -1,5 +1,6 @@
 package com.ziaant.restaurant_service.dto;
 
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -44,3 +45,4 @@ public class RestaurantRequest {
     @Schema(example = "Traditionnel,Famille,Produits locaux")
     private String tags;
 }
+

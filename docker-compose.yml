@@ -2,7 +2,6 @@ version: '3.9'
 
 services:
 
- 
   postgresql:
     image: postgres:15
     container_name: ziaant-postgresql
@@ -14,6 +13,11 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ziaant"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - ziaant-network
     restart: unless-stopped
@@ -38,6 +42,7 @@ services:
     container_name: ziaant-eureka
     ports:
       - "8761:8761"
+    # healthcheck supprimé temporairement pour éviter le blocage
     networks:
       - ziaant-network
     restart: unless-stopped
@@ -49,9 +54,10 @@ services:
     ports:
       - "8888:8888"
     environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_URI: http://eureka-server:8761/eureka/
     depends_on:
-      - eureka-server
+      eureka-server:
+        condition: service_started
     networks:
       - ziaant-network
     restart: unless-stopped
@@ -79,8 +85,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_URI: http://eureka-server:8761/eureka/
     depends_on:
+
       - eureka-server
     networks:
       - ziaant-network
@@ -100,6 +107,53 @@ services:
     depends_on:
       - postgresql
       - eureka-server
+
+     
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: ziaant-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - ziaant-network
+
+  notification-service:
+    build: ./services/notification-service
+    container_name: ziaant-notification
+    ports:
+      - "8083:8083"
+    environment:
+      EUREKA_URI: http://eureka-server:8761/eureka/
+      SPRING_RABBITMQ_HOST: rabbitmq
+      GMAIL_APP_PASSWORD: "urthijivxdudkbtk"
+    depends_on:
+      rabbitmq:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+      mailhog:
+        condition: service_started
+    networks:
+      - ziaant-network
+
+  restaurant-service:
+    build: ./services/restaurant-service
+    container_name: ziaant-restaurant
+    ports:
+    - "8084:8084"
+    environment:
+      EUREKA_URI: http://eureka-server:8761/eureka/
+      DB_HOST: postgresql          # ← MANQUAIT
+      DB_USERNAME: ziaant          # ← MANQUAIT
+      DB_PASSWORD: ziaant123       # ← MANQUAIT
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+
     networks:
       - ziaant-network
 

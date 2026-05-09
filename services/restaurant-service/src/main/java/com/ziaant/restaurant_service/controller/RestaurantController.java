@@ -19,9 +19,8 @@ public class RestaurantController {
 
     private final RestaurantService restaurantService;
 
-    // ================================================================
     // ENDPOINTS PUBLICS (pas de token requis)
-    // ================================================================
+
 
     @GetMapping
     @Tag(name = "Public")
@@ -50,9 +49,8 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurantService.getMenu(id));
     }
 
-    // ================================================================
     // ENDPOINTS RESTAURATEUR (token requis, role RESTAURATEUR ou ADMIN)
-    // ================================================================
+
 
     @PostMapping
     @Tag(name = "Restaurateur")
@@ -88,7 +86,7 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurantService.getMesRestaurants(authHeader));
     }
 
-    // ── Menu ───────────────────────────────────────────────────────
+    // Menu 
 
     @PostMapping("/{id}/menu")
     @Tag(name = "Restaurateur - Menu")
@@ -126,9 +124,9 @@ public class RestaurantController {
         return ResponseEntity.ok(new MessageResponse("Plat supprime avec succes."));
     }
 
-    // ================================================================
+  
     // ENDPOINTS ADMIN (token requis, role ADMIN)
-    // ================================================================
+ 
 
     @GetMapping("/admin/tous")
     @Tag(name = "Admin")

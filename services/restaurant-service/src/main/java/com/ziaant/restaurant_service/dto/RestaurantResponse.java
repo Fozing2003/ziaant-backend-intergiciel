@@ -1,5 +1,6 @@
 package com.ziaant.restaurant_service.dto;
 
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -32,3 +33,4 @@ public class RestaurantResponse {
     private LocalDateTime createdAt;
     private List<MenuItemResponse> menuItems;
 }
+
