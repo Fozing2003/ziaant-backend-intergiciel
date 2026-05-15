@@ -96,7 +96,23 @@ public class AuthService {
     public UserProfileResponse getProfile(String token) {
         String email = jwtUtil.extractEmail(token);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable."));
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+        return toProfile(user);
+    }
+
+    public UserProfileResponse updateProfile(String token, UserUpdateRequest request) {
+        String email = jwtUtil.extractEmail(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+        user.setName(request.getName());
+        user.setPhone(request.getPhone());
+
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+        userRepository.save(user);
         return toProfile(user);
     }
 
@@ -118,19 +134,15 @@ public class AuthService {
     public void changerStatut(String token, Long userId, String nouveauStatut) {
         verifierAdmin(token);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable."));
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
         user.setStatut(StatutCompte.valueOf(nouveauStatut));
         userRepository.save(user);
     }
 
     private void verifierAdmin(String token) {
-        if (!jwtUtil.isTokenValid(token)) {
-            throw new RuntimeException("Token invalide ou expire.");
-        }
+        if (!jwtUtil.isTokenValid(token)) throw new RuntimeException("Token invalide");
         String role = jwtUtil.extractRole(token);
-        if (!"ADMIN".equals(role)) {
-            throw new RuntimeException("Acces refuse. Reserve a l'administrateur.");
-        }
+        if (!"ADMIN".equals(role)) throw new RuntimeException("Accès réservé à l'administrateur");
     }
 
     private UserProfileResponse toProfile(User user) {

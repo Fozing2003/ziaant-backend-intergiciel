@@ -10,19 +10,13 @@ services:
       POSTGRES_PASSWORD: ziaant123
       POSTGRES_DB: ziaant_db
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ziaant"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
       - ziaant-network
     restart: unless-stopped
 
- 
   rabbitmq:
     image: rabbitmq:3-management
     container_name: ziaant-rabbitmq
@@ -36,35 +30,20 @@ services:
       - ziaant-network
     restart: unless-stopped
 
- 
   eureka-server:
     build: ./eureka-server
     container_name: ziaant-eureka
     ports:
       - "8761:8761"
-    # healthcheck supprimé temporairement pour éviter le blocage
     networks:
       - ziaant-network
     restart: unless-stopped
 
-  
-  config-server:
-    build: ./config-server
-    container_name: ziaant-config
-    ports:
-      - "8888:8888"
-    environment:
-      EUREKA_URI: http://eureka-server:8761/eureka/
-    depends_on:
-      eureka-server:
-        condition: service_started
-    networks:
-      - ziaant-network
-    restart: unless-stopped
+  # MICROSERVICES 
 
-  user-service:
-    build: ./services/user-service
-    container_name: ziaant-user
+  auth-service:
+    build: ./services/auth-service
+    container_name: ziaant-auth
     ports:
       - "8081:8081"
     environment:
@@ -77,85 +56,68 @@ services:
       - postgresql
     networks:
       - ziaant-network
-    restart: unless-stopped  
- 
+    restart: unless-stopped
+
+  reservation-service:
+    build: ./services/reservation-service
+    container_name: ziaant-reservation
+    ports:
+      - "8082:8082"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/ziaant_db
+      SPRING_DATASOURCE_USERNAME: ziaant
+      SPRING_DATASOURCE_PASSWORD: ziaant123
+    depends_on:
+      - eureka-server
+      - postgresql
+    networks:
+      - ziaant-network
+    restart: unless-stopped
+
+  restaurant-service:
+    build: ./services/restaurant-service
+    container_name: ziaant-restaurant
+    ports:
+      - "8083:8083"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/ziaant_db
+      SPRING_DATASOURCE_USERNAME: ziaant
+      SPRING_DATASOURCE_PASSWORD: ziaant123
+    depends_on:
+      - eureka-server
+      - postgresql
+    networks:
+      - ziaant-network
+    restart: unless-stopped
+
+  notification-service:
+    build: ./services/notification-service
+    container_name: ziaant-notification
+    ports:
+      - "8084:8084"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      - eureka-server
+      - rabbitmq
+    networks:
+      - ziaant-network
+    restart: unless-stopped
+
+  # GATEWAY
   gateway-service:
     build: ./gateway-service
     container_name: ziaant-gateway
     ports:
       - "8080:8080"
     environment:
-      EUREKA_URI: http://eureka-server:8761/eureka/
-    depends_on:
-
-      - eureka-server
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     networks:
       - ziaant-network
     restart: unless-stopped
-
-  auth-service:
-    build: ./services/auth-service
-    container_name: ziaant-auth
-    ports:
-      - "8081:8081"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/auth_db
-      SPRING_DATASOURCE_USERNAME: ziaant
-      SPRING_DATASOURCE_PASSWORD: ziaant123
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      JWT_SECRET: ZiaantReserveTableCMSuperSecretKeyForJWT2025MustBe256BitsLong!
-    depends_on:
-      - postgresql
-      - eureka-server
-
-     
-
-  mailhog:
-    image: mailhog/mailhog
-    container_name: ziaant-mailhog
-    ports:
-      - "1025:1025"
-      - "8025:8025"
-    networks:
-      - ziaant-network
-
-  notification-service:
-    build: ./services/notification-service
-    container_name: ziaant-notification
-    ports:
-      - "8083:8083"
-    environment:
-      EUREKA_URI: http://eureka-server:8761/eureka/
-      SPRING_RABBITMQ_HOST: rabbitmq
-      GMAIL_APP_PASSWORD: "urthijivxdudkbtk"
-    depends_on:
-      rabbitmq:
-        condition: service_started
-      eureka-server:
-        condition: service_started
-      mailhog:
-        condition: service_started
-    networks:
-      - ziaant-network
-
-  restaurant-service:
-    build: ./services/restaurant-service
-    container_name: ziaant-restaurant
-    ports:
-    - "8084:8084"
-    environment:
-      EUREKA_URI: http://eureka-server:8761/eureka/
-      DB_HOST: postgresql          # ← MANQUAIT
-      DB_USERNAME: ziaant          # ← MANQUAIT
-      DB_PASSWORD: ziaant123       # ← MANQUAIT
-    depends_on:
-      postgresql:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-
-    networks:
-      - ziaant-network
 
 volumes:
   postgres_data:

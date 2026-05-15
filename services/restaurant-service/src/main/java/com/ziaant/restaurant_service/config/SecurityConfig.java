@@ -26,14 +26,20 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/api/restaurants/public/**",
-                    "/api/restaurants",
-                    "/api/restaurants/{id}",
-                    "/api/restaurants/{id}/menu",
+                    // Endpoints publics
+                    "/api/restaurants",                    // ← déjà bon
+                    "/api/restaurants/{id}",               // ← CORRIGÉ (enlever les guillemets)
+                    "/api/restaurants/{id}/menu",          // ← CORRIGÉ
+                    "/api/restaurants/public/**",          // ← gardé
+                    
+                    // Swagger
                     "/swagger-ui/**",
                     "/swagger-ui.html",
-                    "/api-docs/**",
-                    "/actuator/**"
+                    "/v3/api-docs/**",                     // ← AJOUTÉ (v3/api-docs au lieu de api-docs)
+                    "/api-docs/**",                        // ← gardé
+                    
+                    // Actuator
+                    "/actuator/**"                         // ← gardé
                 ).permitAll()
                 .anyRequest().authenticated()
             );
