@@ -27,19 +27,19 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     // Endpoints publics
-                    "/api/restaurants",                    // ← déjà bon
-                    "/api/restaurants/{id}",               // ← CORRIGÉ (enlever les guillemets)
-                    "/api/restaurants/{id}/menu",          // ← CORRIGÉ
-                    "/api/restaurants/public/**",          // ← gardé
+                    "/api/restaurants",                   
+                    "/api/restaurants/{id}",               
+                    "/api/restaurants/{id}/menu",        
+                    "/api/restaurants/public/**",         
                     
                     // Swagger
                     "/swagger-ui/**",
                     "/swagger-ui.html",
-                    "/v3/api-docs/**",                     // ← AJOUTÉ (v3/api-docs au lieu de api-docs)
-                    "/api-docs/**",                        // ← gardé
+                    "/v3/api-docs/**",                   
+                    "/api-docs/**",                       
                     
                     // Actuator
-                    "/actuator/**"                         // ← gardé
+                    "/actuator/**"                         
                 ).permitAll()
                 .anyRequest().authenticated()
             );

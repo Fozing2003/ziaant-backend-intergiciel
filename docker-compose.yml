@@ -2,8 +2,6 @@ version: '3.9'
 
 services:
 
-  # ====================== INFRASTRUCTURE ======================
-
   postgresql:
     image: postgres:15
     container_name: ziaant-postgresql
@@ -20,10 +18,10 @@ services:
       - ziaant-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ziaant"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ziaant -d auth_db"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -33,7 +31,7 @@ services:
       RABBITMQ_DEFAULT_PASS: ziaant123
     ports:
       - "5672:5672"
-      - "15672:15672"   # Interface admin RabbitMQ : http://localhost:15672
+      - "15672:15672"
     networks:
       - ziaant-network
     restart: unless-stopped
@@ -41,23 +39,22 @@ services:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   eureka-server:
     build: ./eureka-server
     container_name: ziaant-eureka
     ports:
-      - "8761:8761"   # Dashboard Eureka : http://localhost:8761
+      - "8761:8761"
     networks:
       - ziaant-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
-      interval: 15s
+      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
+      interval: 10s
       timeout: 5s
-      retries: 5
-
-  # ====================== MICROSERVICES ======================
+      retries: 10
+      start_period: 30s
 
   auth-service:
     build: ./services/auth-service
@@ -76,7 +73,7 @@ services:
         condition: service_healthy
     networks:
       - ziaant-network
-    restart: unless-stopped
+    restart: on-failure
 
   reservation-service:
     build: ./services/reservation-service
@@ -98,7 +95,7 @@ services:
         condition: service_healthy
     networks:
       - ziaant-network
-    restart: unless-stopped
+    restart: on-failure
 
   restaurant-service:
     build: ./services/restaurant-service
@@ -117,7 +114,7 @@ services:
         condition: service_healthy
     networks:
       - ziaant-network
-    restart: unless-stopped
+    restart: on-failure
 
   notification-service:
     build: ./services/notification-service
@@ -134,15 +131,13 @@ services:
         condition: service_healthy
     networks:
       - ziaant-network
-    restart: unless-stopped
-
-  # ====================== GATEWAY ======================
+    restart: on-failure
 
   gateway-service:
     build: ./gateway-service
     container_name: ziaant-gateway
     ports:
-      - "8080:8080"   # Point d'entrée unique : http://localhost:8080
+      - "8080:8080"
     environment:
       EUREKA_URI: http://eureka-server:8761/eureka/
     depends_on:
@@ -150,7 +145,7 @@ services:
         condition: service_healthy
     networks:
       - ziaant-network
-    restart: unless-stopped
+    restart: on-failure
 
 volumes:
   postgres_data:
