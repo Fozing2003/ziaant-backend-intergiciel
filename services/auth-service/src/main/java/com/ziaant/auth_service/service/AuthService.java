@@ -36,7 +36,7 @@ public class AuthService {
                 .statut(StatutCompte.APPROUVE)
                 .build();
         userRepository.save(user);
-        return buildResponse(user, jwtUtil.generateToken(user.getEmail(), user.getRole().name()));
+        return buildResponse(user, jwtUtil.generateToken(user));
     }
 
     public AuthResponse registerRestaurateur(RestaurateurRegisterRequest request) {
@@ -52,7 +52,7 @@ public class AuthService {
                 .statut(StatutCompte.EN_ATTENTE)
                 .build();
         userRepository.save(user);
-        return buildResponse(user, jwtUtil.generateToken(user.getEmail(), user.getRole().name()));
+        return buildResponse(user, jwtUtil.generateToken(user));
     }
 
     public AuthResponse registerAdmin(AdminRegisterRequest request) {
@@ -71,7 +71,7 @@ public class AuthService {
                 .statut(StatutCompte.APPROUVE)
                 .build();
         userRepository.save(user);
-        return buildResponse(user, jwtUtil.generateToken(user.getEmail(), user.getRole().name()));
+        return buildResponse(user, jwtUtil.generateToken(user));
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -86,7 +86,7 @@ public class AuthService {
         if (user.getStatut() == StatutCompte.EN_ATTENTE) {
             throw new RuntimeException("Votre compte est en attente de validation par l'administrateur.");
         }
-        return buildResponse(user, jwtUtil.generateToken(user.getEmail(), user.getRole().name()));
+        return buildResponse(user, jwtUtil.generateToken(user));
     }
 
     public boolean validateToken(String token) {

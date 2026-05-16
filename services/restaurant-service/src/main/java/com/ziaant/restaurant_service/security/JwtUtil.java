@@ -40,4 +40,13 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
+
+    public Long extractUserId(String token) {
+    Object id = getClaims(token).get("userId");
+    if (id instanceof Integer) return ((Integer) id).longValue();
+    if (id instanceof Long) return (Long) id;
+    throw new RuntimeException("userId introuvable dans le token");
+ }
+
+ 
 }

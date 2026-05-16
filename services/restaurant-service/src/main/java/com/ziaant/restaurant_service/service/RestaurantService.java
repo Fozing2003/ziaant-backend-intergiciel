@@ -108,7 +108,7 @@ public class RestaurantService {
                 .reviewCount(0)
                 .featured(false)
                 .statut(StatutRestaurant.EN_ATTENTE)
-                .restaurateurId(0L) // sera remplace par le vrai ID via user-service
+                .restaurateurId(jwtUtil.extractUserId(token)) 
                 .build();
 
         restaurantRepository.save(restaurant);
@@ -145,9 +145,10 @@ public class RestaurantService {
     public List<RestaurantResponse> getMesRestaurants(String authHeader) {
         String token = extraireToken(authHeader);
         verifierRestaurateur(token);
+        Long restaurateurId = jwtUtil.extractUserId(token);
         // Pour l instant retourne tous — a filtrer par restaurateurId quand user-service est pret
-        return restaurantRepository.findAll().stream()
-                .map(this::toResponse).collect(Collectors.toList());
+     return restaurantRepository.findByRestaurateurId(restaurateurId).stream()
+        .map(this::toResponse).collect(Collectors.toList());
     }
 
     // ── Gestion du menu ────────────────────────────────────────

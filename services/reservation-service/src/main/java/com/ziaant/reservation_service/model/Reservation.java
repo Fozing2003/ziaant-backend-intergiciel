@@ -25,6 +25,7 @@ public class Reservation {
 
     private String clientName;
     private String clientPhone;
+    private String clientEmail;
 
     private LocalDateTime reservationDate;
     private String timeSlot;
