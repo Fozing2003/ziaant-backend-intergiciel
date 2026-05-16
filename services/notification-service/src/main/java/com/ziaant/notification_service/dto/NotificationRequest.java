@@ -10,10 +10,9 @@ public class NotificationRequest {
 
     @NotBlank
     @Email
-    @Pattern(regexp = "^[A-Za-z0-9+_.-]+@gmail\\.com$",
-             message = "Seules les adresses Gmail sont autorisées") // Restriction au domaine gmail.com
+    @Pattern(regexp = "^[A-Za-z0-9+_.-]+@(gmail\\.com|yahoo\\.com|yahoo\\.fr)$",//Utilisez Gmail, Yahoo, Outlook, Hotmail,  ou ProtonMail
+         message = "Adresse email non autorisée")
     private String to;
-
     @NotBlank
     private String subject;
 
