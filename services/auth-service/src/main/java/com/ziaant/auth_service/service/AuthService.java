@@ -109,21 +109,7 @@ public class AuthService {
         return toProfile(user);
     }
 
-    public UserProfileResponse updateProfile(String token, UserUpdateRequest request) {
-        String email = jwtUtil.extractEmail(token);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
-
-        user.setName(request.getName());
-        user.setPhone(request.getPhone());
-
-        if (request.getPassword() != null && !request.getPassword().isBlank()) {
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
-        }
-
-        userRepository.save(user);
-        return toProfile(user);
-    }
+  
 
     public UserProfileResponse updateProfile(String token, UserUpdateRequest request) {
         if (!jwtUtil.isTokenValid(token)) {
