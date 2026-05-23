@@ -1,25 +1,33 @@
 package com.ziaant.reservation_service.dto;
 
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 public class ReservationRequest {
+
     @NotNull
     private Long restaurantId;
 
     @NotNull
-    private LocalDateTime reservationDate;
+    private Long tableId;
 
     @NotNull
-    private String timeSlot;
+    private Long userId;
+
+    @NotNull
+    private LocalDate dateReservation;
+
+    @NotBlank
+    private String heureReservation;
 
     @NotNull
     @Min(1)
-    private int numberOfGuests;
+    private int nombrePersonnes;
 
-    private String notes;
+    private String commentaire;
 }

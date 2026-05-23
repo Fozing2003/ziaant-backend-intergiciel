@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,20 +23,21 @@ public class Reservation {
 
     private Long clientId;
     private Long restaurantId;
+    private Long tableId;
 
     private String clientName;
     private String clientPhone;
     private String clientEmail;
 
-    private LocalDateTime reservationDate;
-    private String timeSlot;
-    private int numberOfGuests;
+    private LocalDate dateReservation;
+    private String heureReservation;
+    private int nombrePersonnes;
 
     @Enumerated(EnumType.STRING)
     private ReservationStatus status = ReservationStatus.PENDING;
 
     @Column(length = 500)
-    private String notes;
+    private String commentaire;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

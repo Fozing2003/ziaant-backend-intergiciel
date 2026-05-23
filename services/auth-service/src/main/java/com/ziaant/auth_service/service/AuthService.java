@@ -25,7 +25,7 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Cet email est deja utilise.");
+            throw new RuntimeException("Cet email est déjà utilisé.");
         }
         User user = User.builder()
                 .name(request.getName())
@@ -36,12 +36,14 @@ public class AuthService {
                 .statut(StatutCompte.APPROUVE)
                 .build();
         userRepository.save(user);
-        return buildResponse(user, jwtUtil.generateToken(user));
+
+        return buildResponse(user, null);
+
     }
 
     public AuthResponse registerRestaurateur(RestaurateurRegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Cet email est deja utilise.");
+            throw new RuntimeException("Cet email est déjà utilisé.");
         }
         User user = User.builder()
                 .name(request.getName())
@@ -52,7 +54,9 @@ public class AuthService {
                 .statut(StatutCompte.EN_ATTENTE)
                 .build();
         userRepository.save(user);
-        return buildResponse(user, jwtUtil.generateToken(user));
+
+        return buildResponse(user, null);
+
     }
 
     public AuthResponse registerAdmin(AdminRegisterRequest request) {
@@ -60,7 +64,7 @@ public class AuthService {
             throw new RuntimeException("Secret admin incorrect.");
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Cet email est deja utilise.");
+            throw new RuntimeException("Cet email est déjà utilisé.");
         }
         User user = User.builder()
                 .name(request.getName())
@@ -71,7 +75,9 @@ public class AuthService {
                 .statut(StatutCompte.APPROUVE)
                 .build();
         userRepository.save(user);
-        return buildResponse(user, jwtUtil.generateToken(user));
+
+        return buildResponse(user, null);
+
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -81,7 +87,7 @@ public class AuthService {
             throw new RuntimeException("Email ou mot de passe incorrect.");
         }
         if (user.getStatut() == StatutCompte.SUSPENDU) {
-            throw new RuntimeException("Votre compte a ete suspendu. Contactez l'administrateur.");
+            throw new RuntimeException("Votre compte a été suspendu. Contactez l'administrateur.");
         }
         if (user.getStatut() == StatutCompte.EN_ATTENTE) {
             throw new RuntimeException("Votre compte est en attente de validation par l'administrateur.");
@@ -94,24 +100,29 @@ public class AuthService {
     }
 
     public UserProfileResponse getProfile(String token) {
+        if (!jwtUtil.isTokenValid(token)) {
+            throw new RuntimeException("Token invalide ou expiré.");
+        }
         String email = jwtUtil.extractEmail(token);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
         return toProfile(user);
     }
 
+  
+
     public UserProfileResponse updateProfile(String token, UserUpdateRequest request) {
+        if (!jwtUtil.isTokenValid(token)) {
+            throw new RuntimeException("Token invalide ou expiré.");
+        }
         String email = jwtUtil.extractEmail(token);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
-
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable."));
         user.setName(request.getName());
         user.setPhone(request.getPhone());
-
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
-
         userRepository.save(user);
         return toProfile(user);
     }
@@ -140,9 +151,14 @@ public class AuthService {
     }
 
     private void verifierAdmin(String token) {
-        if (!jwtUtil.isTokenValid(token)) throw new RuntimeException("Token invalide");
-        String role = jwtUtil.extractRole(token);
-        if (!"ADMIN".equals(role)) throw new RuntimeException("Accès réservé à l'administrateur");
+
+        if (!jwtUtil.isTokenValid(token)) {
+            throw new RuntimeException("Token invalide ou expiré.");
+        }
+        if (!"ADMIN".equals(jwtUtil.extractRole(token))) {
+            throw new RuntimeException("Accès réservé à l'administrateur.");
+        }
+
     }
 
     private UserProfileResponse toProfile(User user) {

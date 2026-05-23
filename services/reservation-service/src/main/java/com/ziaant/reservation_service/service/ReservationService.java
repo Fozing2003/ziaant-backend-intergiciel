@@ -63,13 +63,14 @@ public class ReservationService {
         Reservation reservation = Reservation.builder()
                 .clientId(clientId)
                 .restaurantId(request.getRestaurantId())
+                .tableId(request.getTableId())
                 .clientName(clientName)
                 .clientPhone(clientPhone)
                 .clientEmail(clientEmail)
-                .reservationDate(request.getReservationDate())
-                .timeSlot(request.getTimeSlot())
-                .numberOfGuests(request.getNumberOfGuests())
-                .notes(request.getNotes())
+                .dateReservation(request.getDateReservation())
+                .heureReservation(request.getHeureReservation())
+                .nombrePersonnes(request.getNombrePersonnes())
+                .commentaire(request.getCommentaire())
                 .status(ReservationStatus.PENDING)
                 .build();
 
@@ -79,12 +80,12 @@ public class ReservationService {
                 clientEmail,
                 "Réservation reçue - ReserveTable CM",
                 String.format(
-                    "Bonjour %s,\n\nVotre demande de réservation pour le %s (%s) a bien été reçue.\n" +
+                    "Bonjour %s,\n\nVotre demande de réservation pour le %s à %s a bien été reçue.\n" +
                     "Nombre de personnes : %d\n\nVous serez notifié(e) dès que le restaurant confirme.\n\nMerci d'utiliser ReserveTable CM !",
                     clientName,
-                    saved.getReservationDate().toLocalDate(),
-                    saved.getTimeSlot(),
-                    saved.getNumberOfGuests()
+                    saved.getDateReservation(),
+                    saved.getHeureReservation(),
+                    saved.getNombrePersonnes()
                 )
         );
 
@@ -98,16 +99,15 @@ public class ReservationService {
         reservation.setStatus(ReservationStatus.CONFIRMED);
         Reservation saved = repository.save(reservation);
 
-        // clientEmail est maintenant stocké en base — plus de problème
         sendNotification(
                 saved.getClientEmail(),
                 "Réservation confirmée - ReserveTable CM",
                 String.format(
                     "Bonjour %s,\n\nVotre réservation du %s à %s pour %d personne(s) a été CONFIRMÉE.\n\nÀ bientôt !",
                     saved.getClientName(),
-                    saved.getReservationDate().toLocalDate(),
-                    saved.getTimeSlot(),
-                    saved.getNumberOfGuests()
+                    saved.getDateReservation(),
+                    saved.getHeureReservation(),
+                    saved.getNombrePersonnes()
                 )
         );
 
@@ -127,8 +127,8 @@ public class ReservationService {
                 String.format(
                     "Bonjour %s,\n\nNous sommes désolés, votre réservation du %s à %s a été refusée par le restaurant.\n\nVous pouvez faire une nouvelle demande sur ReserveTable CM.",
                     saved.getClientName(),
-                    saved.getReservationDate().toLocalDate(),
-                    saved.getTimeSlot()
+                    saved.getDateReservation(),
+                    saved.getHeureReservation()
                 )
         );
 
@@ -200,13 +200,14 @@ public class ReservationService {
                 .id(reservation.getId())
                 .clientId(reservation.getClientId())
                 .restaurantId(reservation.getRestaurantId())
+                .tableId(reservation.getTableId())
                 .clientName(reservation.getClientName())
                 .clientPhone(reservation.getClientPhone())
-                .reservationDate(reservation.getReservationDate())
-                .timeSlot(reservation.getTimeSlot())
-                .numberOfGuests(reservation.getNumberOfGuests())
+                .dateReservation(reservation.getDateReservation())
+                .heureReservation(reservation.getHeureReservation())
+                .nombrePersonnes(reservation.getNombrePersonnes())
                 .status(reservation.getStatus())
-                .notes(reservation.getNotes())
+                .commentaire(reservation.getCommentaire())
                 .createdAt(reservation.getCreatedAt())
                 .build();
     }
@@ -218,5 +219,4 @@ public class ReservationService {
         }
         repository.deleteById(id);
     }
-    
 }
