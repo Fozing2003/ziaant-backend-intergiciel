@@ -24,6 +24,8 @@ public class RestaurantResponse {
     private String imageUrl;
     private String openHours;
     private String priceRange;
+    private Integer prixMin;
+    private Integer prixMax;
     private Double rating;
     private Integer reviewCount;
     private Boolean featured;

@@ -29,8 +29,10 @@ public class RestaurantController {
     public ResponseEntity<List<RestaurantResponse>> getPublicList(
             @RequestParam(required = false) String ville,
             @RequestParam(required = false) String cuisine,
-            @RequestParam(required = false) String search) {
-        return ResponseEntity.ok(restaurantService.getPublicList(ville, cuisine, search));
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer prixMin,
+            @RequestParam(required = false) Integer prixMax) {
+        return ResponseEntity.ok(restaurantService.getPublicList(ville, cuisine, search, prixMin, prixMax));
     }
 
     @GetMapping("/{id}")

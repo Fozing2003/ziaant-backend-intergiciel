@@ -35,7 +35,9 @@ public class Restaurant {
     private String email;
     private String imageUrl;
     private String openHours;     // ex: 07h-15h · 18h-22h
-    private String priceRange;    // ex: 1 000 - 3 000 FCFA
+    private String priceRange;
+    private Integer prixMin;
+    private Integer prixMax;
 
     private Double rating;
     private Integer reviewCount;

@@ -30,4 +30,5 @@ public class ReservationRequest {
     private int nombrePersonnes;
 
     private String commentaire;
+    private String restaurateurEmail;
 }

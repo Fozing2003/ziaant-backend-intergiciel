@@ -5,7 +5,10 @@ import com.ziaant.restaurant_service.dto.*;
 import com.ziaant.restaurant_service.entity.*;
 import com.ziaant.restaurant_service.repository.*;
 import com.ziaant.restaurant_service.security.JwtUtil;
+import com.ziaant.restaurant_service.config.RabbitMQConfig;
+import com.ziaant.restaurant_service.dto.NotificationEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +28,19 @@ public class RestaurantService {
     private final JwtUtil              jwtUtil;
 
     // ── Helpers token ──────────────────────────────────────────
+
+    private void sendNotification(String to, String subject, String body) {
+        try {
+            NotificationEvent event = NotificationEvent.builder()
+                    .to(to).subject(subject).body(body).build();
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.NOTIFICATION_EXCHANGE,
+                    RabbitMQConfig.NOTIFICATION_ROUTING_KEY,
+                    event);
+        } catch (Exception e) {
+            // Ne pas bloquer si RabbitMQ est indisponible
+        }
+    }
 
     private String extraireToken(String authHeader) {
         if (authHeader == null) throw new IllegalArgumentException("Token manquant.");
@@ -54,8 +70,8 @@ public class RestaurantService {
     // ── Endpoints publics ──────────────────────────────────────
 
     /** Liste tous les restaurants ACTIF */
-    public List<RestaurantResponse> getPublicList(String ville, String cuisine, String search) {
-        return restaurantRepository.search(StatutRestaurant.ACTIF, ville, cuisine, search)
+    public List<RestaurantResponse> getPublicList(String ville, String cuisine, String search, Integer prixMin, Integer prixMax) {
+        return restaurantRepository.search(StatutRestaurant.ACTIF, ville, cuisine, search, prixMin, prixMax)
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
@@ -103,6 +119,8 @@ public class RestaurantService {
                 .imageUrl(request.getImageUrl())
                 .openHours(request.getOpenHours())
                 .priceRange(request.getPriceRange())
+                .prixMin(request.getPrixMin())
+                .prixMax(request.getPrixMax())
                 .tags(request.getTags())
                 .rating(0.0)
                 .reviewCount(0)
@@ -236,6 +254,15 @@ public class RestaurantService {
         String msg = statut.equals("ACTIF")
                 ? "Restaurant valide et publie avec succes."
                 : "Restaurant suspendu avec succes.";
+        if ("ACTIF".equals(statut)) {
+            sendNotification(restaurant.getEmail(),
+                    "Votre restaurant est en ligne - ReserveTable CM",
+                    "Bonjour,\n\nVotre restaurant \"" + restaurant.getName() + "\" a été validé.\nIl est maintenant visible par tous les clients sur ReserveTable CM.\n\nL\'équipe ReserveTable CM");
+        } else if ("SUSPENDU".equals(statut)) {
+            sendNotification(restaurant.getEmail(),
+                    "Restaurant suspendu - ReserveTable CM",
+                    "Bonjour,\n\nVotre restaurant \"" + restaurant.getName() + "\" a été suspendu.\nPour plus d\'informations, contactez notre support.\n\nL\'équipe ReserveTable CM");
+        }
         return new MessageResponse(msg);
     }
 
@@ -254,6 +281,8 @@ public class RestaurantService {
                 .imageUrl(r.getImageUrl())
                 .openHours(r.getOpenHours())
                 .priceRange(r.getPriceRange())
+                .prixMin(r.getPrixMin())
+                .prixMax(r.getPrixMax())
                 .rating(r.getRating())
                 .reviewCount(r.getReviewCount())
                 .featured(r.getFeatured())

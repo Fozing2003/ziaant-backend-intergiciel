@@ -71,11 +71,25 @@ public class ReservationService {
                 .heureReservation(request.getHeureReservation())
                 .nombrePersonnes(request.getNombrePersonnes())
                 .commentaire(request.getCommentaire())
+                .restaurateurEmail(request.getRestaurateurEmail())
                 .status(ReservationStatus.PENDING)
                 .build();
 
         Reservation saved = repository.save(reservation);
 
+        if (saved.getRestaurateurEmail() != null && !saved.getRestaurateurEmail().isBlank()) {
+            sendNotification(
+                    saved.getRestaurateurEmail(),
+                    "Nouvelle réservation - ReserveTable CM",
+                    String.format(
+                        "Bonjour,\n\nUne nouvelle réservation a été faite par %s pour le %s à %s.\nNombre de personnes : %d\n\nConnectez-vous pour confirmer ou refuser.\n\nReserveTable CM",
+                        clientName,
+                        request.getDateReservation(),
+                        request.getHeureReservation(),
+                        request.getNombrePersonnes()
+                    )
+            );
+        }
         sendNotification(
                 clientEmail,
                 "Réservation reçue - ReserveTable CM",
@@ -141,6 +155,18 @@ public class ReservationService {
                 .orElseThrow(() -> new RuntimeException("Réservation non trouvée"));
         reservation.setStatus(ReservationStatus.CANCELLED);
         repository.save(reservation);
+        if (reservation.getRestaurateurEmail() != null && !reservation.getRestaurateurEmail().isBlank()) {
+            sendNotification(
+                    reservation.getRestaurateurEmail(),
+                    "Réservation annulée - ReserveTable CM",
+                    String.format(
+                        "Bonjour,\n\nLa réservation de %s prévue le %s à %s a été annulée par le client.\n\nReserveTable CM",
+                        reservation.getClientName(),
+                        reservation.getDateReservation(),
+                        reservation.getHeureReservation()
+                    )
+            );
+        }
     }
 
     public List<ReservationResponse> getMyReservations(String authHeader) {

@@ -4,7 +4,10 @@ import com.ziaant.auth_service.dto.*;
 import com.ziaant.auth_service.model.*;
 import com.ziaant.auth_service.repository.UserRepository;
 import com.ziaant.auth_service.security.JwtUtil;
+import com.ziaant.auth_service.config.RabbitMQConfig;
+import com.ziaant.auth_service.dto.NotificationEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final RabbitTemplate rabbitTemplate;
 
     @Value("${admin.secret}")
     private String adminSecret;
@@ -36,7 +40,9 @@ public class AuthService {
                 .statut(StatutCompte.APPROUVE)
                 .build();
         userRepository.save(user);
-
+        sendNotification(user.getEmail(),
+                "Bienvenue sur ReserveTable CM !",
+                "Bonjour " + user.getName() + ",\n\nVotre compte a été créé avec succès.\nBonne découverte des restaurants !\n\nL'équipe ReserveTable CM");
         return buildResponse(user, null);
 
     }
@@ -54,7 +60,9 @@ public class AuthService {
                 .statut(StatutCompte.EN_ATTENTE)
                 .build();
         userRepository.save(user);
-
+        sendNotification(user.getEmail(),
+                "Demande de compte restaurateur reçue",
+                "Bonjour " + user.getName() + ",\n\nVotre demande a bien été reçue.\nVotre compte est en attente de validation par notre équipe.\nVous serez notifié(e) dès validation.\n\nL'équipe ReserveTable CM");
         return buildResponse(user, null);
 
     }
@@ -148,6 +156,28 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
         user.setStatut(StatutCompte.valueOf(nouveauStatut));
         userRepository.save(user);
+        if ("APPROUVE".equals(nouveauStatut)) {
+            sendNotification(user.getEmail(),
+                    "Compte approuvé - ReserveTable CM",
+                    "Bonjour " + user.getName() + ",\n\nVotre compte a été approuvé.\nVous pouvez maintenant vous connecter et accéder à votre espace.\n\nL'équipe ReserveTable CM");
+        } else if ("SUSPENDU".equals(nouveauStatut)) {
+            sendNotification(user.getEmail(),
+                    "Compte suspendu - ReserveTable CM",
+                    "Bonjour " + user.getName() + ",\n\nVotre compte a été suspendu.\nPour plus d'informations, contactez notre support.\n\nL'équipe ReserveTable CM");
+        }
+    }
+
+    private void sendNotification(String to, String subject, String body) {
+        try {
+            NotificationEvent event = NotificationEvent.builder()
+                    .to(to).subject(subject).body(body).build();
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.NOTIFICATION_EXCHANGE,
+                    RabbitMQConfig.NOTIFICATION_ROUTING_KEY,
+                    event);
+        } catch (Exception e) {
+            // Ne pas bloquer si RabbitMQ est indisponible
+        }
     }
 
     private void verifierAdmin(String token) {

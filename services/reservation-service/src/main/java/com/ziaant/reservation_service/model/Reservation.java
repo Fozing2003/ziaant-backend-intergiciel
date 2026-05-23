@@ -38,6 +38,7 @@ public class Reservation {
 
     @Column(length = 500)
     private String commentaire;
+    private String restaurateurEmail;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
