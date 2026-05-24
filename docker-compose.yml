@@ -66,10 +66,15 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/auth_db
       SPRING_DATASOURCE_USERNAME: ziaant
       SPRING_DATASOURCE_PASSWORD: ziaant123
+      RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: ziaant
+      SPRING_RABBITMQ_PASSWORD: ziaant123
     depends_on:
       postgresql:
         condition: service_healthy
       eureka-server:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - ziaant-network
