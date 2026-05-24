@@ -26,6 +26,7 @@ public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final MenuItemRepository   menuItemRepository;
     private final JwtUtil              jwtUtil;
+    private final RabbitTemplate       rabbitTemplate;
 
     // ── Helpers token ──────────────────────────────────────────
 
