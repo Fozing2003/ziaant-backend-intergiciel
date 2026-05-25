@@ -19,6 +19,7 @@ import java.util.List;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final com.ziaant.auth_service.security.session.TokenSessionStore tokenSessionStore;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -38,7 +39,8 @@ public class JwtFilter extends OncePerRequestFilter {
                 token = token.substring(7).trim();
             }
 
-            if (jwtUtil.isTokenValid(token)) {
+            if (jwtUtil.isTokenValid(token)
+                    && !tokenSessionStore.isAccessTokenBlacklisted(jwtUtil.extractTokenId(token))) {
                 String email = jwtUtil.extractEmail(token);
                 String role = jwtUtil.extractRole(token);
 

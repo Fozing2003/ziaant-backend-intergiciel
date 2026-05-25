@@ -1,4 +1,4 @@
-version: '3.9'
+name: ziaant-backend
 
 services:
 
@@ -41,6 +41,36 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    container_name: ziaant-redis
+    ports:
+      - "6380:6379"
+    networks:
+      - ziaant-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongodb:
+    image: mongo:7
+    container_name: ziaant-mongodb
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - ziaant-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   eureka-server:
     build: ./eureka-server
     container_name: ziaant-eureka
@@ -69,6 +99,11 @@ services:
       RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_USERNAME: ziaant
       SPRING_RABBITMQ_PASSWORD: ziaant123
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-change-me-in-production}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-300000}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
       postgresql:
         condition: service_healthy
@@ -78,7 +113,7 @@ services:
         condition: service_healthy
     networks:
       - ziaant-network
-    restart: on-failure
+    restart: unless-stopped
 
   reservation-service:
     build: ./services/reservation-service
@@ -91,6 +126,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ziaant
       SPRING_DATASOURCE_PASSWORD: ziaant123
       SPRING_RABBITMQ_HOST: rabbitmq
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-change-me-in-production}
     depends_on:
       postgresql:
         condition: service_healthy
@@ -100,7 +136,7 @@ services:
         condition: service_healthy
     networks:
       - ziaant-network
-    restart: on-failure
+    restart: unless-stopped
 
   restaurant-service:
     build: ./services/restaurant-service
@@ -112,14 +148,20 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/restaurant_db
       SPRING_DATASOURCE_USERNAME: ziaant
       SPRING_DATASOURCE_PASSWORD: ziaant123
+      SPRING_RABBITMQ_HOST: rabbitmq
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-change-me-in-production}
     depends_on:
       postgresql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
     networks:
       - ziaant-network
-    restart: on-failure
+    restart: unless-stopped
 
   notification-service:
     build: ./services/notification-service
@@ -129,31 +171,54 @@ services:
     environment:
       EUREKA_URI: http://eureka-server:8761/eureka/
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/notification_db
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-change-me-in-production}
     depends_on:
       rabbitmq:
+        condition: service_healthy
+      mongodb:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
     networks:
       - ziaant-network
-    restart: on-failure
+    restart: unless-stopped
 
   gateway-service:
     build: ./gateway-service
     container_name: ziaant-gateway
     ports:
-      - "8080:8080"
+      - "8090:8080"
     environment:
       EUREKA_URI: http://eureka-server:8761/eureka/
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-change-me-in-production}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-change-me-in-production}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
       eureka-server:
         condition: service_healthy
+      auth-service:
+        condition: service_started
+      reservation-service:
+        condition: service_started
+      restaurant-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+      redis:
+        condition: service_healthy
     networks:
       - ziaant-network
-    restart: on-failure
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+    external: true
+    name: ziaant-backend-intergiciel_postgres_data
+  mongo_data:
 
 networks:
   ziaant-network:

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.time.Instant;
 
 @Component
 public class JwtUtil {
@@ -19,8 +20,7 @@ public class JwtUtil {
 
     public boolean isTokenValid(String token) {
         try {
-            parseClaims(token);
-            return true;
+            return "access".equals(parseClaims(token).get("typ", String.class));
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
@@ -32,6 +32,14 @@ public class JwtUtil {
 
     public String extractRole(String token) {
         return parseClaims(token).get("role", String.class);
+    }
+
+    public String extractTokenId(String token) {
+        return parseClaims(token).getId();
+    }
+
+    public Instant extractExpiration(String token) {
+        return parseClaims(token).getExpiration().toInstant();
     }
 
     private Claims parseClaims(String token) {

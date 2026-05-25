@@ -1,8 +1,10 @@
 package com.ziaant.gateway_service.security.filter;
 
+import com.ziaant.gateway_service.security.AccessTokenRevocationStore;
 import com.ziaant.gateway_service.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -20,15 +22,19 @@ import java.util.List;
 public class JwtAuthFilter implements GlobalFilter, Ordered {
 
     private final JwtUtil jwtUtil;
+    private final AccessTokenRevocationStore accessTokenRevocationStore;
 
-    // Routes accessibles SANS token
+    @Value("${security.internal-token}")
+    private String internalToken;
+
     private static final List<String> PUBLIC_PATHS = List.of(
             "/api/auth/register",
             "/api/auth/register/restaurateur",
             "/api/auth/register/admin",
             "/api/auth/login",
+            "/api/auth/refresh",
             "/api/auth/validate",
-            "/api/restaurants",          // liste publique
+            "/api/restaurants",
             "/swagger-ui",
             "/v3/api-docs",
             "/actuator"
@@ -38,45 +44,53 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getPath().toString();
 
-        // Si la route est publique, on laisse passer
         boolean isPublic = PUBLIC_PATHS.stream().anyMatch(path::startsWith);
         if (isPublic) {
             return chain.filter(exchange);
         }
 
-        // Vérification du header Authorization
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.warn("Accès refusé sur {} : header Authorization manquant", path);
+            log.warn("Access refused on {}: missing Authorization header", path);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
         String token = authHeader.substring(7).trim();
-
         if (!jwtUtil.isTokenValid(token)) {
-            log.warn("Accès refusé sur {} : token JWT invalide ou expiré", path);
+            log.warn("Access refused on {}: invalid or expired JWT", path);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
-        // Token valide — on ajoute les infos dans les headers pour les services en aval
         String email = jwtUtil.extractEmail(token);
-        String role  = jwtUtil.extractRole(token);
+        String role = jwtUtil.extractRole(token);
+        String tokenId = jwtUtil.extractTokenId(token);
 
-        ServerWebExchange mutatedExchange = exchange.mutate()
-                .request(r -> r
-                        .header("X-User-Email", email)
-                        .header("X-User-Role", role)
-                )
-                .build();
+        return accessTokenRevocationStore.isRevoked(tokenId)
+                .flatMap(revoked -> {
+                    if (revoked) {
+                        log.warn("Access refused on {}: revoked JWT", path);
+                        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                        return exchange.getResponse().setComplete();
+                    }
 
-        log.debug("Token valide — user: {}, role: {}, path: {}", email, role, path);
-        return chain.filter(mutatedExchange);
+                    ServerWebExchange.Builder exchangeBuilder = exchange.mutate()
+                            .request(r -> r
+                                    .header("X-User-Email", email)
+                                    .header("X-User-Role", role)
+                            );
+
+                    if (path.startsWith("/api/notifications")) {
+                        exchangeBuilder.request(r -> r.header("X-Internal-Token", internalToken));
+                    }
+
+                    return chain.filter(exchangeBuilder.build());
+                });
     }
 
     @Override
     public int getOrder() {
-        return -1; // S'exécute en premier
+        return -1;
     }
 }

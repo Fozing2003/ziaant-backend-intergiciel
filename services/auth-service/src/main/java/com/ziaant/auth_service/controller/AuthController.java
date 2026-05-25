@@ -56,10 +56,25 @@ public class AuthController {
 
     @PostMapping("/api/auth/login")
 
-    @Operation(summary = "Connexion — retourne un token JWT")
+    @Operation(summary = "Connexion - retourne un access token et un refresh token")
 
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/api/auth/refresh")
+    @Operation(summary = "Renouveler l'access token avec un refresh token")
+    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refresh(request));
+    }
+
+    @PostMapping("/api/auth/logout")
+    @Operation(summary = "Deconnexion et revocation des tokens")
+    public ResponseEntity<Map<String, String>> logout(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody(required = false) LogoutRequest request) {
+        authService.logout(extractToken(authHeader), request);
+        return ResponseEntity.ok(Map.of("message", "Deconnexion effectuee"));
     }
 
     @GetMapping("/api/auth/validate")
