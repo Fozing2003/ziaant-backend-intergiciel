@@ -1,5 +1,6 @@
 package com.ziaant.restaurant_service.dto;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -8,3 +9,4 @@ import lombok.Data;
 public class MessageResponse {
     private String message;
 }
+

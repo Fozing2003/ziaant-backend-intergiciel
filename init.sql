@@ -1,13 +1,3 @@
-CREATE DATABASE IF NOT EXISTS auth_db;
-CREATE DATABASE IF NOT EXISTS restaurant_db;
-CREATE DATABASE IF NOT EXISTS reservation_db;
-CREATE DATABASE IF NOT EXISTS user_db;
-CREATE DATABASE IF NOT EXISTS notification_db;
-CREATE DATABASE IF NOT EXISTS payment_db;
-
-GRANT ALL PRIVILEGES ON DATABASE auth_db TO ziaant;
-GRANT ALL PRIVILEGES ON DATABASE restaurant_db TO ziaant;
-GRANT ALL PRIVILEGES ON DATABASE reservation_db TO ziaant;
-GRANT ALL PRIVILEGES ON DATABASE user_db TO ziaant;
-GRANT ALL PRIVILEGES ON DATABASE notification_db TO ziaant;
-GRANT ALL PRIVILEGES ON DATABASE payment_db TO ziaant;
+SELECT 'CREATE DATABASE restaurant_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'restaurant_db')\gexec
+SELECT 'CREATE DATABASE reservation_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'reservation_db')\gexec
+SELECT 'CREATE DATABASE notification_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'notification_db')\gexec

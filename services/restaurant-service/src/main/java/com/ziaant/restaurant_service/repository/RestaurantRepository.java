@@ -1,6 +1,7 @@
 package com.ziaant.restaurant_service.repository;
 
 import com.ziaant.restaurant_service.entity.Restaurant;
+
 import com.ziaant.restaurant_service.entity.StatutRestaurant;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -31,9 +32,14 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     @Query("SELECT r FROM Restaurant r WHERE r.statut = :statut " +
            "AND (:ville IS NULL OR LOWER(r.ville) = LOWER(:ville)) " +
            "AND (:cuisine IS NULL OR LOWER(r.cuisine) = LOWER(:cuisine)) " +
-           "AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "AND (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "AND (:prixMin IS NULL OR r.prixMax >= :prixMin) " +
+           "AND (:prixMax IS NULL OR r.prixMin <= :prixMax)")
     List<Restaurant> search(@Param("statut") StatutRestaurant statut,
                             @Param("ville") String ville,
                             @Param("cuisine") String cuisine,
-                            @Param("search") String search);
+                            @Param("search") String search,
+                            @Param("prixMin") Integer prixMin,
+                            @Param("prixMax") Integer prixMax);
 }
+

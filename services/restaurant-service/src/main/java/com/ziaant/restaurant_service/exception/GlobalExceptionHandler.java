@@ -1,5 +1,6 @@
 package com.ziaant.restaurant_service.exception;
 
+
 import com.ziaant.restaurant_service.dto.MessageResponse;
 import org.springframework.http.*;
 import org.springframework.validation.FieldError;
@@ -30,3 +31,4 @@ public class GlobalExceptionHandler {
                 .body(new MessageResponse(ex.getMessage()));
     }
 }
+

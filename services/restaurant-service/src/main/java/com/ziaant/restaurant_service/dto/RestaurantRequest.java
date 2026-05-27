@@ -1,5 +1,6 @@
 package com.ziaant.restaurant_service.dto;
 
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -40,7 +41,12 @@ public class RestaurantRequest {
 
     @Schema(example = "1 000 - 3 000 FCFA")
     private String priceRange;
+    @Schema(example = "1000")
+    private Integer prixMin;
+    @Schema(example = "3000")
+    private Integer prixMax;
 
     @Schema(example = "Traditionnel,Famille,Produits locaux")
     private String tags;
 }
+

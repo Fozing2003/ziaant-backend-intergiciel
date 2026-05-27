@@ -1,5 +1,6 @@
 package com.ziaant.restaurant_service.dto;
 
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -23,6 +24,8 @@ public class RestaurantResponse {
     private String imageUrl;
     private String openHours;
     private String priceRange;
+    private Integer prixMin;
+    private Integer prixMax;
     private Double rating;
     private Integer reviewCount;
     private Boolean featured;
@@ -32,3 +35,4 @@ public class RestaurantResponse {
     private LocalDateTime createdAt;
     private List<MenuItemResponse> menuItems;
 }
+

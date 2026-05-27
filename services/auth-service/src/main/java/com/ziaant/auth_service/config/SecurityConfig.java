@@ -36,6 +36,7 @@ public class SecurityConfig {
                     "/api/auth/register/restaurateur",
                     "/api/auth/register/admin",
                     "/api/auth/login",
+                    "/api/auth/refresh",
                     "/api/auth/validate",
                     "/swagger-ui/**",
                     "/swagger-ui.html",

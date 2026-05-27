@@ -20,6 +20,8 @@ public class AuthController {
     private final AuthService authService;
 
     private String extractToken(String authHeader) {
+
+
         if (authHeader == null || authHeader.isBlank()) {
             throw new RuntimeException("Token manquant dans le header Authorization");
         }
@@ -32,6 +34,7 @@ public class AuthController {
         }
         return token;
     }
+
 
     @PostMapping("/api/auth/register")
     @Operation(summary = "Inscription Client")
@@ -52,27 +55,49 @@ public class AuthController {
     }
 
     @PostMapping("/api/auth/login")
-    @Operation(summary = "Connexion — retourne un token JWT")
+
+    @Operation(summary = "Connexion - retourne un access token et un refresh token")
+
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    @PostMapping("/api/auth/refresh")
+    @Operation(summary = "Renouveler l'access token avec un refresh token")
+    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refresh(request));
+    }
+
+    @PostMapping("/api/auth/logout")
+    @Operation(summary = "Deconnexion et revocation des tokens")
+    public ResponseEntity<Map<String, String>> logout(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody(required = false) LogoutRequest request) {
+        authService.logout(extractToken(authHeader), request);
+        return ResponseEntity.ok(Map.of("message", "Deconnexion effectuee"));
+    }
+
     @GetMapping("/api/auth/validate")
+
     @Operation(summary = "Valider un token JWT (utilisé par le Gateway)")
+
     public ResponseEntity<Map<String, Boolean>> validate(@RequestParam String token) {
         return ResponseEntity.ok(Map.of("valid", authService.validateToken(token)));
     }
+
 
     @GetMapping("/api/users/me")
     @Operation(summary = "Récupérer mon profil")
     public ResponseEntity<UserProfileResponse> getCurrentUser(
             @RequestHeader("Authorization") String authHeader) {
+
         return ResponseEntity.ok(authService.getProfile(extractToken(authHeader)));
     }
 
     @PutMapping("/api/users/me")
     @Operation(summary = "Mettre à jour mon profil")
     public ResponseEntity<UserProfileResponse> updateProfile(
+
             @RequestHeader("Authorization") String authHeader,
             @Valid @RequestBody UserUpdateRequest request) {
         return ResponseEntity.ok(authService.updateProfile(extractToken(authHeader), request));
@@ -120,3 +145,4 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Compte suspendu avec succès."));
     }
 }
+

@@ -8,7 +8,10 @@ import lombok.*;
 @Builder
 public class AuthResponse {
     private Long id;
-    private String token;
+    private String accessToken;
+    private String refreshToken;
+    private Long accessTokenExpiresIn;
+    private Long refreshTokenExpiresIn;
     private String name;
     private String email;
     private String phone;
