@@ -1,51 +1,38 @@
 global:
-  scrape_interval: 15s       # Prometheus collecte les métriques toutes les 15 secondes
-  evaluation_interval: 15s   # Prometheus évalue les règles d'alerte toutes les 15 secondes
+  scrape_interval: 15s
+  evaluation_interval: 15s
 
 scrape_configs:
 
-  # Prometheus se surveille lui-même
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
 
-  # Eureka Server
   - job_name: 'eureka-server'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['ziaant-eureka:8761']
 
-  # Config Server
-  - job_name: 'config-server'
-    metrics_path: '/actuator/prometheus'
-    static_configs:
-      - targets: ['ziaant-config:8888']
-
-  # Gateway Service
   - job_name: 'gateway-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['ziaant-gateway:8080']
 
-  # Auth Service
   - job_name: 'auth-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['ziaant-auth:8081']
 
-  # Restaurant Service
   - job_name: 'restaurant-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['ziaant-restaurant:8082']
+      - targets: ['ziaant-restaurant:8083']
 
-  # Reservation Service
   - job_name: 'reservation-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['ziaant-reservation:8083']
+      - targets: ['ziaant-reservation:8082']
 
-  # Notification Service
   - job_name: 'notification-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
