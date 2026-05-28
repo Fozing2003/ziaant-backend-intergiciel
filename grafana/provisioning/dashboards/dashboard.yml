@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: 'Ziaant Dashboards'
+    orgId: 1
+    folder: 'Ziaant'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

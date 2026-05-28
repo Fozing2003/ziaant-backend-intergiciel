@@ -186,6 +186,7 @@ services:
       - ziaant-network
     restart: unless-stopped
 
+
   gateway-service:
     build: ./gateway-service
     container_name: ziaant-gateway
@@ -214,11 +215,49 @@ services:
       - ziaant-network
     restart: unless-stopped
 
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ziaant-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    depends_on:
+      - eureka-server
+    networks:
+      - ziaant-network
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ziaant-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ziaant123
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - ziaant-network
+
+
 volumes:
   postgres_data:
     external: true
     name: ziaant-backend-intergiciel_postgres_data
   mongo_data:
+  prometheus_data:    
+  grafana_data:       
 
 networks:
   ziaant-network:

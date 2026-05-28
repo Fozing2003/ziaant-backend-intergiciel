@@ -1,0 +1,124 @@
+{
+  "title": "Ziaant Backend - Supervision",
+  "uid": "ziaant-main",
+  "version": 1,
+  "schemaVersion": 36,
+  "refresh": "15s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Services actifs",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "count(up{job=~'auth-service|restaurant-service|reservation-service|notification-service|gateway-service|eureka-server|config-server'} == 1)",
+          "legendFormat": "Services UP"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "thresholds": {
+          "steps": [
+            { "color": "red", "value": 0 },
+            { "color": "orange", "value": 4 },
+            { "color": "green", "value": 7 }
+          ]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Statut de chaque service (1=UP, 0=DOWN)",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 0, "w": 18, "h": 4 },
+      "targets": [
+        {
+          "expr": "up{job=~'auth-service|restaurant-service|reservation-service|notification-service|gateway-service|eureka-server|config-server'}",
+          "legendFormat": "{{ job }}"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "thresholds": {
+          "steps": [
+            { "color": "red", "value": 0 },
+            { "color": "green", "value": 1 }
+          ]
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "CPU utilisé par service (%)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "process_cpu_usage{job=~'auth-service|restaurant-service|reservation-service|notification-service|gateway-service'} * 100",
+          "legendFormat": "{{ job }}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Mémoire JVM utilisée (MB)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{job=~'auth-service|restaurant-service|reservation-service|notification-service|gateway-service', area='heap'} / 1024 / 1024",
+          "legendFormat": "{{ job }} - heap"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Requêtes HTTP par seconde (toutes routes)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{job=~'auth-service|restaurant-service|reservation-service|notification-service|gateway-service'}[1m])) by (job)",
+          "legendFormat": "{{ job }}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Taux d'erreurs HTTP 5xx par service",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{status=~'5..', job=~'auth-service|restaurant-service|reservation-service|notification-service|gateway-service'}[1m])) by (job)",
+          "legendFormat": "{{ job }} - erreurs 5xx"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Temps de réponse moyen (ms)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_sum{job=~'auth-service|restaurant-service|reservation-service|notification-service|gateway-service'}[1m])) by (job) / sum(rate(http_server_requests_seconds_count{job=~'auth-service|restaurant-service|reservation-service|notification-service|gateway-service'}[1m])) by (job) * 1000",
+          "legendFormat": "{{ job }}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Threads JVM actifs",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "jvm_threads_live_threads{job=~'auth-service|restaurant-service|reservation-service|notification-service|gateway-service'}",
+          "legendFormat": "{{ job }}"
+        }
+      ]
+    }
+  ]
+}
