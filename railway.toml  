@@ -1,0 +1,73 @@
+[build]
+builder = "dockerfile"
+
+
+# EUREKA SERVER
+
+[services.eureka-server]
+source = "eureka-server"
+dockerfile = "eureka-server/Dockerfile"
+
+[services.eureka-server.deploy]
+startCommand = "java -jar app.jar"
+healthcheckPath = "/actuator/health"
+healthcheckTimeout = 60
+
+
+# AUTH SERVICE
+
+[services.auth-service]
+source = "services/auth-service"
+dockerfile = "services/auth-service/Dockerfile"
+
+[services.auth-service.deploy]
+startCommand = "java -jar app.jar"
+healthcheckPath = "/actuator/health"
+healthcheckTimeout = 60
+
+
+# RESTAURANT SERVICE
+
+[services.restaurant-service]
+source = "services/restaurant-service"
+dockerfile = "services/restaurant-service/Dockerfile"
+
+[services.restaurant-service.deploy]
+startCommand = "java -jar app.jar"
+healthcheckPath = "/actuator/health"
+healthcheckTimeout = 60
+
+
+# RESERVATION SERVICE
+
+[services.reservation-service]
+source = "services/reservation-service"
+dockerfile = "services/reservation-service/Dockerfile"
+
+[services.reservation-service.deploy]
+startCommand = "java -jar app.jar"
+healthcheckPath = "/actuator/health"
+healthcheckTimeout = 60
+
+# NOTIFICATION SERVICE
+
+[services.notification-service]
+source = "services/notification-service"
+dockerfile = "services/notification-service/Dockerfile"
+
+[services.notification-service.deploy]
+startCommand = "java -jar app.jar"
+healthcheckPath = "/actuator/health"
+healthcheckTimeout = 60
+
+
+# GATEWAY SERVICE
+
+[services.gateway-service]
+source = "gateway-service"
+dockerfile = "gateway-service/Dockerfile"
+
+[services.gateway-service.deploy]
+startCommand = "java -jar app.jar"
+healthcheckPath = "/actuator/health"
+healthcheckTimeout = 60
