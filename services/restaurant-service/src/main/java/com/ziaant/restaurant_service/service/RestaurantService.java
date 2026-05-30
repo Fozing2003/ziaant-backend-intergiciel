@@ -1,6 +1,5 @@
 package com.ziaant.restaurant_service.service;
 
-
 import com.ziaant.restaurant_service.dto.*;
 import com.ziaant.restaurant_service.entity.*;
 import com.ziaant.restaurant_service.repository.*;
@@ -13,12 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-
 @RequiredArgsConstructor
 @Slf4j
 public class RestaurantService {
@@ -28,8 +25,6 @@ public class RestaurantService {
     private final JwtUtil              jwtUtil;
     private final RabbitTemplate       rabbitTemplate;
 
-    // ── Helpers token ──────────────────────────────────────────
-
     private void sendNotification(String to, String subject, String body) {
         try {
             NotificationEvent event = NotificationEvent.builder()
@@ -38,9 +33,7 @@ public class RestaurantService {
                     RabbitMQConfig.NOTIFICATION_EXCHANGE,
                     RabbitMQConfig.NOTIFICATION_ROUTING_KEY,
                     event);
-        } catch (Exception e) {
-            // Ne pas bloquer si RabbitMQ est indisponible
-        }
+        } catch (Exception e) { }
     }
 
     private String extraireToken(String authHeader) {
@@ -70,13 +63,28 @@ public class RestaurantService {
 
     // ── Endpoints publics ──────────────────────────────────────
 
-    /** Liste tous les restaurants ACTIF */
     public List<RestaurantResponse> getPublicList(String ville, String cuisine, String search, Integer prixMin, Integer prixMax) {
-        return restaurantRepository.search(StatutRestaurant.ACTIF, ville, cuisine, search, prixMin, prixMax)
-                .stream().map(this::toResponse).collect(Collectors.toList());
+        List<Restaurant> tous = restaurantRepository.findByStatut(StatutRestaurant.ACTIF);
+        return tous.stream()
+            .filter(r -> {
+                if (ville != null && !ville.isBlank() && !r.getVille().equalsIgnoreCase(ville)) return false;
+                if (cuisine != null && !cuisine.isBlank() && !r.getCuisine().equalsIgnoreCase(cuisine)) return false;
+                if (search != null && !search.isBlank()) {
+                    String q = search.toLowerCase();
+                    boolean match = (r.getName() != null && r.getName().toLowerCase().contains(q))
+                            || (r.getVille() != null && r.getVille().toLowerCase().contains(q))
+                            || (r.getCuisine() != null && r.getCuisine().toLowerCase().contains(q))
+                            || (r.getAddress() != null && r.getAddress().toLowerCase().contains(q));
+                    if (!match) return false;
+                }
+                if (prixMin != null && r.getPrixMax() != null && r.getPrixMax() < prixMin) return false;
+                if (prixMax != null && r.getPrixMin() != null && r.getPrixMin() > prixMax) return false;
+                return true;
+            })
+            .map(this::toResponse)
+            .collect(Collectors.toList());
     }
 
-    /** Detail d un restaurant ACTIF */
     public RestaurantResponse getPublicDetail(Long id) {
         Restaurant r = restaurantRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Restaurant introuvable."));
@@ -85,13 +93,10 @@ public class RestaurantService {
         return toResponseAvecMenu(r);
     }
 
-    /** Menu d un restaurant */
     public MenuResponse getMenu(Long restaurantId) {
         restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new IllegalArgumentException("Restaurant introuvable."));
-
         List<MenuItem> items = menuItemRepository.findByRestaurantId(restaurantId);
-
         return MenuResponse.builder()
                 .entrees(filtrerCategorie(items, CategorieMenu.ENTREE))
                 .plats(filtrerCategorie(items, CategorieMenu.PLAT))
@@ -102,7 +107,6 @@ public class RestaurantService {
 
     // ── Endpoints restaurateur ─────────────────────────────────
 
-    /** Creer un restaurant */
     @Transactional
     public RestaurantResponse creer(String authHeader, RestaurantRequest request) {
         String token = extraireToken(authHeader);
@@ -127,7 +131,7 @@ public class RestaurantService {
                 .reviewCount(0)
                 .featured(false)
                 .statut(StatutRestaurant.EN_ATTENTE)
-                .restaurateurId(jwtUtil.extractUserId(token)) 
+                .restaurateurId(jwtUtil.extractUserId(token))
                 .build();
 
         restaurantRepository.save(restaurant);
@@ -135,7 +139,6 @@ public class RestaurantService {
         return toResponse(restaurant);
     }
 
-    /** Modifier un restaurant */
     @Transactional
     public RestaurantResponse modifier(String authHeader, Long id, RestaurantRequest request) {
         String token = extraireToken(authHeader);
@@ -160,27 +163,22 @@ public class RestaurantService {
         return toResponse(restaurant);
     }
 
-    /** Voir ses propres restaurants */
     public List<RestaurantResponse> getMesRestaurants(String authHeader) {
         String token = extraireToken(authHeader);
         verifierRestaurateur(token);
         Long restaurateurId = jwtUtil.extractUserId(token);
-        // Pour l instant retourne tous — a filtrer par restaurateurId quand user-service est pret
-     return restaurantRepository.findByRestaurateurId(restaurateurId).stream()
-        .map(this::toResponse).collect(Collectors.toList());
+        return restaurantRepository.findByRestaurateurId(restaurateurId).stream()
+                .map(this::toResponse).collect(Collectors.toList());
     }
 
-    // ── Gestion du menu ────────────────────────────────────────
+    // ── Menu ───────────────────────────────────────────────────
 
-    /** Ajouter un plat au menu */
     @Transactional
     public MenuItemResponse ajouterPlat(String authHeader, Long restaurantId, MenuItemRequest request) {
         String token = extraireToken(authHeader);
         verifierRestaurateur(token);
-
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new IllegalArgumentException("Restaurant introuvable."));
-
         MenuItem item = MenuItem.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -189,32 +187,25 @@ public class RestaurantService {
                 .disponible(request.isDisponible())
                 .restaurant(restaurant)
                 .build();
-
         menuItemRepository.save(item);
         return toMenuItemResponse(item);
     }
 
-    /** Modifier un plat */
     @Transactional
-    public MenuItemResponse modifierPlat(String authHeader, Long restaurantId,
-                                          Long itemId, MenuItemRequest request) {
+    public MenuItemResponse modifierPlat(String authHeader, Long restaurantId, Long itemId, MenuItemRequest request) {
         String token = extraireToken(authHeader);
         verifierRestaurateur(token);
-
         MenuItem item = menuItemRepository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("Plat introuvable."));
-
         item.setName(request.getName());
         item.setDescription(request.getDescription());
         item.setPrice(request.getPrice());
         item.setCategorie(request.getCategorie());
         item.setDisponible(request.isDisponible());
-
         menuItemRepository.save(item);
         return toMenuItemResponse(item);
     }
 
-    /** Supprimer un plat */
     @Transactional
     public void supprimerPlat(String authHeader, Long restaurantId, Long itemId) {
         String token = extraireToken(authHeader);
@@ -222,9 +213,8 @@ public class RestaurantService {
         menuItemRepository.deleteById(itemId);
     }
 
-    // ── Endpoints admin ────────────────────────────────────────
+    // ── Admin ──────────────────────────────────────────────────
 
-    /** Admin voit tous les restaurants */
     public List<RestaurantResponse> getTous(String authHeader) {
         String token = extraireToken(authHeader);
         verifierAdmin(token);
@@ -232,7 +222,6 @@ public class RestaurantService {
                 .map(this::toResponse).collect(Collectors.toList());
     }
 
-    /** Admin voit les restaurants en attente */
     public List<RestaurantResponse> getEnAttente(String authHeader) {
         String token = extraireToken(authHeader);
         verifierAdmin(token);
@@ -240,30 +229,24 @@ public class RestaurantService {
                 .map(this::toResponse).collect(Collectors.toList());
     }
 
-    /** Admin change le statut d un restaurant */
     @Transactional
     public MessageResponse changerStatut(String authHeader, Long id, String statut) {
         String token = extraireToken(authHeader);
         verifierAdmin(token);
-
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Restaurant introuvable."));
-
         restaurant.setStatut(StatutRestaurant.valueOf(statut));
         restaurantRepository.save(restaurant);
-
-        String msg = statut.equals("ACTIF")
-                ? "Restaurant valide et publie avec succes."
-                : "Restaurant suspendu avec succes.";
         if ("ACTIF".equals(statut)) {
             sendNotification(restaurant.getEmail(),
                     "Votre restaurant est en ligne - ReserveTable CM",
-                    "Bonjour,\n\nVotre restaurant \"" + restaurant.getName() + "\" a été validé.\nIl est maintenant visible par tous les clients sur ReserveTable CM.\n\nL\'équipe ReserveTable CM");
+                    "Bonjour,\n\nVotre restaurant \"" + restaurant.getName() + "\" a ete valide.\nIl est maintenant visible sur ReserveTable CM.\n\nL'equipe ReserveTable CM");
         } else if ("SUSPENDU".equals(statut)) {
             sendNotification(restaurant.getEmail(),
                     "Restaurant suspendu - ReserveTable CM",
-                    "Bonjour,\n\nVotre restaurant \"" + restaurant.getName() + "\" a été suspendu.\nPour plus d\'informations, contactez notre support.\n\nL\'équipe ReserveTable CM");
+                    "Bonjour,\n\nVotre restaurant \"" + restaurant.getName() + "\" a ete suspendu.\n\nL'equipe ReserveTable CM");
         }
+        String msg = "ACTIF".equals(statut) ? "Restaurant valide et publie." : "Restaurant suspendu.";
         return new MessageResponse(msg);
     }
 
@@ -319,4 +302,3 @@ public class RestaurantService {
                 .collect(Collectors.toList());
     }
 }
-
