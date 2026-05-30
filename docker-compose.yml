@@ -100,7 +100,7 @@ services:
       SPRING_RABBITMQ_USERNAME: ziaant
       SPRING_RABBITMQ_PASSWORD: ziaant123
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production-change-me-in-production}
-      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-300000}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-86400000}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
@@ -237,7 +237,7 @@ services:
     image: grafana/grafana:latest
     container_name: ziaant-grafana
     ports:
-      - "3000:3000"
+      - "3002:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: ziaant123
