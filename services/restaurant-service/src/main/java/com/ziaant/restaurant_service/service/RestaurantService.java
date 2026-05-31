@@ -297,7 +297,7 @@ public class RestaurantService {
 
     private List<MenuItemResponse> filtrerCategorie(List<MenuItem> items, CategorieMenu cat) {
         return items.stream()
-                .filter(i -> i.getCategorie() == cat && i.isDisponible())
+                .filter(i -> i.getCategorie() == cat)
                 .map(this::toMenuItemResponse)
                 .collect(Collectors.toList());
     }
