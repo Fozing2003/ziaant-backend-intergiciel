@@ -237,7 +237,7 @@ services:
     image: grafana/grafana:latest
     container_name: ziaant-grafana
     ports:
-      - "3002:3000"
+      - "3006:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: ziaant123
